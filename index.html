@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>ELITE — Challenge. Compete. Conquer.</title>
+<meta name="description" content="ELITE — a free competitive mini-games platform. Play, climb the ranks, challenge friends." />
+<meta name="theme-color" content="#0a0b0f" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="assets/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ELITE" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="toast-container"></div>
+<div id="app">
+
+  <!-- ========== SPLASH ========== -->
+  <section class="screen active" id="screen-splash">
+    <div class="elite-logo brand-font">ELITE</div>
+    <div class="tagline">Challenge. Compete. Conquer.</div>
+    <div class="cube-spinner">
+      <div class="face f1"></div><div class="face f2"></div><div class="face f3"></div>
+      <div class="face f4"></div><div class="face f5"></div><div class="face f6"></div>
+    </div>
+    <button class="btn btn-gold" id="btn-play-now" style="max-width:280px;margin-top:10px;">PLAY NOW</button>
+    <button class="btn btn-outline" id="btn-splash-login" style="max-width:280px;margin-top:10px;">I ALREADY HAVE AN ELITE ID</button>
+    <div class="online-pill mt-24"><span class="dot"></span><span id="online-count">1,284</span> players online</div>
+  </section>
+
+  <!-- ========== AUTH: SIGN UP ========== -->
+  <section class="screen" id="screen-signup">
+    <div class="topbar" style="padding-left:0;padding-right:0;">
+      <button class="icon-btn" data-nav="screen-splash">←</button>
+      <h2 class="brand-font">Create Your ID</h2>
+      <span></span>
+    </div>
+    <p>This becomes your identity across all of ELITE.</p>
+    <label>Choose your ELITE ID</label>
+    <input type="text" id="input-elite-id" placeholder="e.g. CubeMaster247" maxlength="20" />
+    <label>Email</label>
+    <input type="email" id="input-signup-email" placeholder="you@example.com" />
+    <label>Password</label>
+    <input type="password" id="input-signup-password" placeholder="At least 6 characters" />
+    <label>Choose your avatar</label>
+    <div class="chip-row" id="avatar-picker"></div>
+    <button class="btn btn-gold mt-8" id="btn-do-signup">START YOUR JOURNEY</button>
+    <p class="center-text mt-16">Already have an ID? <button class="link-btn" data-nav="screen-login">Log in</button></p>
+  </section>
+
+  <!-- ========== AUTH: LOGIN ========== -->
+  <section class="screen" id="screen-login">
+    <div class="topbar" style="padding-left:0;padding-right:0;">
+      <button class="icon-btn" data-nav="screen-splash">←</button>
+      <h2 class="brand-font">Welcome Back</h2>
+      <span></span>
+    </div>
+    <label>Email</label>
+    <input type="email" id="input-login-email" placeholder="you@example.com" />
+    <label>Password</label>
+    <input type="password" id="input-login-password" placeholder="Password" />
+    <button class="btn btn-gold mt-8" id="btn-do-login">LOG IN</button>
+    <p class="center-text mt-16">New to ELITE? <button class="link-btn" data-nav="screen-signup">Create your ID</button></p>
+  </section>
+
+  <!-- ========== DASHBOARD ========== -->
+  <section class="screen" id="screen-dashboard">
+    <div class="topbar">
+      <div class="brand-font text-gold" style="font-weight:900;">ELITE</div>
+      <button class="icon-btn" id="btn-logout">⎋</button>
+    </div>
+    <div class="card">
+      <div class="profile-header">
+        <div class="avatar" id="dash-avatar">🙂</div>
+        <div style="flex:1;">
+          <div class="profile-name" id="dash-name">—</div>
+          <div class="profile-rank"><span id="dash-rank-icon">🥉</span> Level <span id="dash-level">1</span> — <span id="dash-rank">Rookie</span></div>
+        </div>
+      </div>
+      <div class="xp-bar-track mt-16"><div class="xp-bar-fill" id="dash-xp-fill" style="width:0%;"></div></div>
+      <div class="text-dim" style="font-size:.82rem;"><span id="dash-xp">0</span> / <span id="dash-xp-to-next">100</span> XP</div>
+      <div class="stat-row">
+        <div class="stat-tile"><div class="value text-gold" id="dash-rating">1200</div><div class="label">Rating</div></div>
+        <div class="stat-tile"><div class="value" id="dash-points">1000</div><div class="label">Points</div></div>
+        <div class="stat-tile"><div class="value" id="dash-streak">🔥 0</div><div class="label">Streak</div></div>
+      </div>
+    </div>
+
+    <button class="btn btn-gold" id="btn-quick-match">⚔️ FIND AN OPPONENT</button>
+
+    <div id="dash-incoming-challenges"></div>
+
+    <h3 class="mt-16">🎮 ELITE Games</h3>
+    <div id="dash-game-list"></div>
+  </section>
+
+  <!-- ========== GAME LOBBY / DETAIL ========== -->
+  <section class="screen" id="screen-game-detail">
+    <div class="topbar" style="padding-left:0;padding-right:0;">
+      <button class="icon-btn" data-nav="screen-dashboard">←</button>
+      <h2 id="gd-title">Game</h2>
+      <span></span>
+    </div>
+    <div class="card center-text">
+      <div style="font-size:3rem;" id="gd-icon">🎮</div>
+      <p id="gd-desc">Description</p>
+    </div>
+    <button class="btn btn-gold" id="btn-play-solo">PLAY SOLO</button>
+    <button class="btn btn-outline mt-8" id="btn-open-challenge">CHALLENGE A PLAYER</button>
+  </section>
+
+  <!-- ========== CHALLENGE SETUP ========== -->
+  <section class="screen" id="screen-challenge-setup">
+    <div class="topbar" style="padding-left:0;padding-right:0;">
+      <button class="icon-btn" data-nav="screen-game-detail">←</button>
+      <h2>Send Challenge</h2>
+      <span></span>
+    </div>
+    <label>Game</label>
+    <div class="card card-tight" id="cs-game-label">—</div>
+    <label class="mt-16">Opponent's ELITE ID</label>
+    <input type="text" id="input-opponent-id" placeholder="e.g. EL_247" />
+    <label>ELITE Points wager</label>
+    <div class="chip-row" id="wager-picker">
+      <div class="chip" data-wager="100">100</div>
+      <div class="chip" data-wager="500">500</div>
+      <div class="chip" data-wager="1000">1,000</div>
+      <div class="chip" data-wager="2500">2,500</div>
+    </div>
+    <p id="cs-wager-note">Winner: +0 · Loser: −0</p>
+    <button class="btn btn-gold" id="btn-send-challenge">SEND CHALLENGE</button>
+  </section>
+
+  <!-- ========== GAME SCREENS ========== -->
+  <section class="screen" id="screen-rps">
+    <div class="topbar" style="padding-left:0;padding-right:0;">
+      <button class="icon-btn" data-nav="screen-dashboard">←</button>
+      <h2>🪨📄✂️ Rock Paper Scissors</h2>
+      <span></span>
+    </div>
+    <div id="rps-root"></div>
+  </section>
+
+  <section class="screen" id="screen-connect4">
+    <div class="topbar" style="padding-left:0;padding-right:0;">
+      <button class="icon-btn" data-nav="screen-dashboard">←</button>
+      <h2>🔴🟡 Four in a Row</h2>
+      <span></span>
+    </div>
+    <div id="connect4-root"></div>
+  </section>
+
+  <section class="screen" id="screen-dice">
+    <div class="topbar" style="padding-left:0;padding-right:0;">
+      <button class="icon-btn" data-nav="screen-dashboard">←</button>
+      <h2>🎲 ELITE Dice</h2>
+      <span></span>
+    </div>
+    <div id="dice-root"></div>
+  </section>
+
+  <section class="screen" id="screen-cube">
+    <div class="topbar" style="padding-left:0;padding-right:0;">
+      <button class="icon-btn" data-nav="screen-dashboard">←</button>
+      <h2>🧩 ELITE Cube</h2>
+      <span></span>
+    </div>
+    <div id="cube-root"></div>
+  </section>
+
+  <!-- ========== LEADERBOARD ========== -->
+  <section class="screen" id="screen-leaderboard">
+    <div class="topbar" style="padding-left:0;padding-right:0;">
+      <button class="icon-btn" data-nav="screen-dashboard">←</button>
+      <h2>🌎 ELITE League</h2>
+      <span></span>
+    </div>
+    <div class="card" id="leaderboard-list"><div class="spinner"></div></div>
+  </section>
+
+  <!-- ========== CUBE WORKSHOP ========== -->
+  <section class="screen" id="screen-workshop">
+    <div class="topbar" style="padding-left:0;padding-right:0;">
+      <button class="icon-btn" data-nav="screen-dashboard">←</button>
+      <h2>🧩 Cube Workshop</h2>
+      <span></span>
+    </div>
+    <div class="cube-viewport">
+      <div class="rubik" id="workshop-preview">
+        <div class="rubik-face U"></div><div class="rubik-face D"></div>
+        <div class="rubik-face F"></div><div class="rubik-face B"></div>
+        <div class="rubik-face L"></div><div class="rubik-face R"></div>
+      </div>
+    </div>
+    <label>Body</label>
+    <div class="chip-row" id="workshop-body"></div>
+    <label>Colour</label>
+    <div class="swatch-row" id="workshop-color"></div>
+    <label class="mt-16">Effect</label>
+    <div class="chip-row" id="workshop-effect"></div>
+    <button class="btn btn-gold mt-8" id="btn-save-cube">SAVE DESIGN</button>
+  </section>
+
+  <!-- ========== BOTTOM NAV (shown once logged in) ========== -->
+  <nav class="bottom-nav hidden" id="bottom-nav">
+    <button class="nav-btn active" data-nav="screen-dashboard"><span class="nav-icon">🏠</span>Home</button>
+    <button class="nav-btn" data-nav="screen-leaderboard"><span class="nav-icon">🌎</span>League</button>
+    <button class="nav-btn" data-nav="screen-workshop"><span class="nav-icon">🧩</span>Cube</button>
+  </nav>
+
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

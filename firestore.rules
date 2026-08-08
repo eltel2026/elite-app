@@ -1,0 +1,64 @@
+rules_version = '2';
+// =====================================================================
+// ELITE — Firestore security rules (v1 / free prototype scope)
+//
+// IMPORTANT HONEST NOTE: ELITE Points and ELITE Rating are entirely
+// virtual (no real money, no cash-out). To let a 1v1 challenge settle
+// BOTH players' stats from whichever client finishes the match, these
+// rules allow any signed-in user to update the *progression* fields
+// (level/xp/rating/points/winStreak) on ANY profile. That is safe for a
+// free casual game but is NOT tamper-proof — a technically-savvy user
+// could in theory edit their own stats directly via the Firebase SDK.
+// If you ever attach real value (cash prizes, paid tournaments, etc.)
+// to ELITE, move match-settling into a Cloud Function that runs with
+// admin privileges instead of trusting the client. For a free
+// competitive-for-fun app, this is a perfectly reasonable starting
+// point.
+// =====================================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Reserves ELITE IDs so two people can't grab the same one.
+    match /usernames/{idLower} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /users/{uid} {
+      // Public read: needed for the leaderboard and for viewing an
+      // opponent's profile / rating before challenging them.
+      allow read: if true;
+
+      allow create: if isSignedIn() && request.auth.uid == uid;
+
+      // Owner can update their own profile, but can never rewrite their
+      // identity fields once set.
+      allow update: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.eliteId == resource.data.eliteId
+        && request.resource.data.eliteIdLower == resource.data.eliteIdLower
+        && request.resource.data.email == resource.data.email;
+
+      // Any signed-in player can update ONLY the progression fields on
+      // ANY profile — this is what lets a challenge's winner settle
+      // both players' stats in one transaction. See note above.
+      allow update: if isSignedIn()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['level', 'xp', 'xpToNext', 'rank', 'rating', 'points', 'winStreak', 'updatedAt']);
+    }
+
+    match /challenges/{challengeId} {
+      allow read: if isSignedIn()
+        && (resource.data.fromUid == request.auth.uid || resource.data.toUid == request.auth.uid);
+
+      allow create: if isSignedIn() && request.resource.data.fromUid == request.auth.uid;
+
+      allow update: if isSignedIn()
+        && (resource.data.fromUid == request.auth.uid || resource.data.toUid == request.auth.uid);
+    }
+  }
+}
