@@ -6,7 +6,7 @@
 import {
   solvedState, applyMove, isSolved, generateScramble, hashSeed, FACE_COLORS, MOVE_NAMES
 } from "./cube-logic.js";
-import { el } from "../ui-helpers.js";
+import { el, enableDragRotate } from "../ui-helpers.js";
 import { applyCubeSkin } from "./cube-skin.js";
 import * as store from "../store.js";
 
@@ -71,6 +71,7 @@ function mountGame(root, ctx, { solo, seed }) {
   paintCube(state);
   const rubikEl = document.getElementById("rubik");
   if (rubikEl && ctx.profile?.cube) applyCubeSkin(rubikEl, ctx.profile.cube);
+    enableDragRotate(rubikEl);
   setControlsEnabled(false);
 
   function setControlsEnabled(enabled) {
