@@ -3,7 +3,7 @@
 // =====================================================================
 import { solvedState, FACE_COLORS } from "../games/cube-logic.js";
 import { applyCubeSkin, CUBE_BODIES, CUBE_COLORS, CUBE_EFFECTS } from "../games/cube-skin.js";
-import { toast } from "../ui-helpers.js";
+import { toast, enableDragRotate } from "../ui-helpers.js";
 import * as store from "../store.js";
 
 let current = { body: "standard", color: "#f2c14e", effect: "none" };
@@ -62,6 +62,7 @@ function renderPickers() {
 }
 
 export function initWorkshopScreen() {
+  enableDragRotate(document.getElementById("workshop-preview"));
   document.getElementById("btn-save-cube").addEventListener("click", async () => {
     try {
       await store.saveCubeCustomisation(myUid, current);
