@@ -40,6 +40,60 @@ export function el(html) {
   return template.content.firstElementChild;
 }
 
+// Lets the user drag/swipe (mouse or touch) to spin a 3D cube element
+// around to look at its other faces. Works via Pointer Events, which
+// cover mouse, touch and pen with one API.
+export function enableDragRotate(cubeEl, { initialX = -28, initialY = -35 } = {}) {
+  if (!cubeEl || cubeEl.dataset.dragRotateBound) return;
+  cubeEl.dataset.dragRotateBound = "1";
+
+  let rotX = initialX;
+  let rotY = initialY;
+  let dragging = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  cubeEl.style.touchAction = "none"; // stop the page from scrolling while spinning the cube
+  cubeEl.style.cursor = "grab";
+
+  function apply() {
+    cubeEl.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+  }
+  apply();
+
+  cubeEl.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    cubeEl.style.cursor = "grabbing";
+    cubeEl.style.transition = "none";
+    cubeEl.setPointerCapture?.(e.pointerId);
+  });
+
+  cubeEl.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    rotY += dx * 0.5;
+    rotX = Math.max(-90, Math.min(90, rotX - dy * 0.5));
+    apply();
+  });
+
+  function stopDrag() {
+    if (!dragging) return;
+    dragging = false;
+    cubeEl.style.cursor = "grab";
+    cubeEl.style.transition = "transform .15s ease";
+  }
+  cubeEl.addEventListener("pointerup", stopDrag);
+  cubeEl.addEventListener("pointercancel", stopDrag);
+  cubeEl.addEventListener("pointerleave", stopDrag);
+
+  return { reset: () => { rotX = initialX; rotY = initialY; apply(); } };
+}
+
 // Generic wiring for every element with data-nav="screenId" so any
 // screen can just add the attribute instead of a bespoke listener.
 export function wireDataNavButtons() {
