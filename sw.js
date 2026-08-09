@@ -4,7 +4,7 @@
 // caches the static app shell only — live data (auth, Firestore) always
 // goes to the network, it is never cached here.
 // =====================================================================
-const CACHE_NAME = "elite-shell-v1";
+const CACHE_NAME = "elite-shell-v2";
 const SHELL_FILES = [
   "./",
   "./index.html",
