@@ -168,7 +168,7 @@ function mountGame(root, ctx, { solo, seed }) {
   enableCubeControls(rubikEl, {
     getHoldActive: () => holdActive,
     canMove: () => movesEnabled && !finished,
-    onFaceMove: (face, dir) => performMove(dir === 1 ? face : `${face}'`)
+    onFaceMove: (face, dir) => performMove(dir === 1 ? `${face}'` : face)
   });
 
   const holdBtn = document.getElementById("cube-hold-btn");
@@ -194,8 +194,26 @@ function mountGame(root, ctx, { solo, seed }) {
     if (finished || !movesEnabled) return;
     state = applyMove(state, move);
     paintCube(state);
+    updateSolveAura();
     if (isSolved(state)) onSolved();
   }
+
+  // The glow/sparkle "aura" around the cube ramps up the closer the
+  // scramble gets to solved — a rough per-sticker match against the
+  // solved reference is a good enough proxy for "getting warmer".
+  function updateSolveAura() {
+    const solved = solvedState();
+    let correct = 0;
+    for (let i = 0; i < 54; i++) if (state[i] === solved[i]) correct++;
+    const fraction = correct / 54;
+    const viewport = document.querySelector(".cube-viewport");
+    viewport.classList.remove("tier-1", "tier-2", "tier-3", "solved");
+    if (finished) viewport.classList.add("solved");
+    else if (fraction >= 0.85) viewport.classList.add("tier-3");
+    else if (fraction >= 0.6) viewport.classList.add("tier-2");
+    else if (fraction >= 0.35) viewport.classList.add("tier-1");
+  }
+  updateSolveAura();
 
   document.getElementById("cube-go").addEventListener("click", (e) => {
     e.target.disabled = true;
@@ -242,6 +260,7 @@ function mountGame(root, ctx, { solo, seed }) {
     finished = true;
     clearInterval(intervalId);
     setControlsEnabled(false);
+    updateSolveAura();
     const elapsedMs = performance.now() - startTime;
     const finishEl = document.getElementById("cube-finish");
     document.getElementById("cube-hint").textContent = "SOLVED!";
