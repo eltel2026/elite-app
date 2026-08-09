@@ -25,6 +25,8 @@ function defaultProfile() {
     rating: 1200,
     points: 1000,
     winStreak: 0,
+    rpsWins: 0,
+    connect4Wins: 0,
     cube: { body: "standard", color: "#f5f5f5", effect: "none" }
   };
 }
@@ -94,4 +96,29 @@ export function submitLocalDiceHighScore({ eliteId, avatar, score }) {
 
 export function getLocalDiceHighScores() {
   return readDiceHighScores();
+}
+
+// --- Local Demo Mode: ELITE Cube best-time board (top 20, lowest wins) ---
+const CUBE_HS_KEY = "elite_local_cube_highscores_v1";
+
+function readCubeHighScores() {
+  try {
+    const raw = localStorage.getItem(CUBE_HS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function submitLocalCubeHighScore({ eliteId, avatar, timeMs }) {
+  const list = readCubeHighScores();
+  list.push({ eliteId, avatar, timeMs, at: Date.now() });
+  list.sort((a, b) => a.timeMs - b.timeMs);
+  const top20 = list.slice(0, 20);
+  localStorage.setItem(CUBE_HS_KEY, JSON.stringify(top20));
+  return top20;
+}
+
+export function getLocalCubeHighScores() {
+  return readCubeHighScores();
 }
