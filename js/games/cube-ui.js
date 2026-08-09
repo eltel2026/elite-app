@@ -395,7 +395,8 @@ function mountGame(root, ctx, { solo, seed }) {
     const finishEl = document.getElementById("cube-finish");
     document.getElementById("cube-hint").textContent = "SOLVED!";
 
-    if (solo) {
+        if (solo) {
+      if (ctx.profile) store.submitCubeHighScore(ctx.profile, elapsedMs).catch(() => {});
       finishEl.innerHTML = `
         <h2 class="center-text text-gold mt-16">🏆 SOLVED! ${formatTime(elapsedMs)}</h2>
         <button class="btn btn-gold" id="cube-again">SCRAMBLE AGAIN</button>
