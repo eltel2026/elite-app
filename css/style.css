@@ -219,11 +219,17 @@ label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom
 .c4-col-hitbox { display: flex; justify-content: center; }
 
 /* ---------- Dice ---------- */
-.dice-row { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+.dice-arena {
+  background: radial-gradient(circle at 30% 0%, #29d3ff 0%, #0f8fd9 40%, #045a97 100%);
+  border-radius: 22px; padding: 22px 14px 20px; margin-bottom: 6px;
+  box-shadow: inset 0 0 50px rgba(0,0,0,.25), 0 10px 26px rgba(4,60,90,.4);
+}
+.dice-arena-hint { text-align: center; color: rgba(255,255,255,.92); font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.dice-row { display: flex; gap: 10px; justify-content: center; margin: 4px 0 18px; }
 .die {
   width: 78px; height: 78px; border-radius: 18px;
-  background: linear-gradient(145deg, #ffffff 0%, #f1f1f1 55%, #d8d8d8 100%);
-  box-shadow: 0 6px 10px rgba(0,0,0,.35), inset 0 2px 3px rgba(255,255,255,.9), inset 0 -6px 8px rgba(0,0,0,.12);
+  background: linear-gradient(145deg, #ff8a75 0%, #e63946 55%, #a81824 100%);
+  box-shadow: 0 6px 10px rgba(0,0,0,.35), inset 0 2px 3px rgba(255,255,255,.55), inset 0 -6px 8px rgba(0,0,0,.2);
   cursor: pointer; border: 3px solid transparent; padding: 10px; box-sizing: border-box;
   transition: transform .15s ease;
 }
@@ -231,10 +237,10 @@ label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom
 .die-face { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 100%; height: 100%; }
 .die-face .pip {
   width: 68%; height: 68%; margin: auto; border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, #555, #0a0a0a 70%);
-  box-shadow: inset 0 1px 1px rgba(255,255,255,.35), 0 1px 1px rgba(0,0,0,.4);
+  background: radial-gradient(circle at 32% 28%, #fff, #eee 70%);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.2), 0 1px 1px rgba(255,255,255,.5);
 }
-.die.held .die-face .pip { background: radial-gradient(circle at 32% 28%, #3a2a08, #000 70%); }
+.die.held .die-face .pip { background: radial-gradient(circle at 32% 28%, #3a2a08, #000 70%); box-shadow: inset 0 1px 1px rgba(255,255,255,.35), 0 1px 1px rgba(0,0,0,.4); }
 .die.rolling { animation: diceTumble .42s ease-in-out; }
 @keyframes diceTumble {
   0%   { transform: rotate(0deg) scale(1); }
@@ -245,6 +251,12 @@ label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom
 .scorecard-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 4px; border-bottom: 1px solid var(--card-border); }
 .scorecard-row button { background: var(--bg-elevated); border: 1px solid var(--card-border); color: var(--gold); border-radius: 8px; padding: 5px 12px; font-weight: 700; cursor: pointer; }
 .scorecard-row .filled { color: var(--text); font-weight: 700; }
+.cat-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 26px; height: 26px; border-radius: 8px; margin-right: 10px;
+  font-size: .78rem; font-weight: 800; color: #fff; padding: 0 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,.35);
+}
 
 /* ---------- Cube ---------- */
 .cube-viewport { display: flex; justify-content: center; padding: 30px 0; perspective: 1200px; position: relative; }
