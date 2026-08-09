@@ -221,7 +221,6 @@ label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom
 /* ---------- Dice ---------- */
 .dice-row { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
 .die { width: 78px; height: 78px; border-radius: 16px; background: linear-gradient(135deg, #fff, #dcdcdc); color: #111; font-size: 2.2rem; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid transparent; }
-.die.held { border-color: var(--gold); background: linear-gradient(135deg, var(--gold-bright), var(--gold)); }
 .scorecard-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 4px; border-bottom: 1px solid var(--card-border); }
 .scorecard-row button { background: var(--bg-elevated); border: 1px solid var(--card-border); color: var(--gold); border-radius: 8px; padding: 5px 12px; font-weight: 700; cursor: pointer; }
 .scorecard-row .filled { color: var(--text); font-weight: 700; }
