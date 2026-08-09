@@ -60,5 +60,17 @@ service cloud.firestore {
       allow update: if isSignedIn()
         && (resource.data.fromUid == request.auth.uid || resource.data.toUid == request.auth.uid);
     }
+
+    // ELITE Dice high scores — a simple public top-20 board. Anyone
+    // signed in can add their own result; nobody can edit or delete an
+    // existing entry (the client trims the board back down to 20 by
+    // deleting only the lowest entry past rank 20, which this rule still
+    // allows since it's a delete, not an edit — see store.js).
+    match /diceHighScores/{entryId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if false;
+      allow delete: if isSignedIn();
+    }
   }
 }
