@@ -70,3 +70,28 @@ export function clearLocalProfile() {
   localStorage.removeItem(KEY);
   listeners.forEach((cb) => cb(null));
 }
+
+// --- Local Demo Mode dice high-scores (top 20, kept in this browser only) ---
+const DICE_HS_KEY = "elite_local_dice_highscores_v1";
+
+function readDiceHighScores() {
+  try {
+    const raw = localStorage.getItem(DICE_HS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function submitLocalDiceHighScore({ eliteId, avatar, score }) {
+  const list = readDiceHighScores();
+  list.push({ eliteId, avatar, score, at: Date.now() });
+  list.sort((a, b) => b.score - a.score);
+  const top20 = list.slice(0, 20);
+  localStorage.setItem(DICE_HS_KEY, JSON.stringify(top20));
+  return top20;
+}
+
+export function getLocalDiceHighScores() {
+  return readDiceHighScores();
+}
