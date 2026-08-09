@@ -10,7 +10,7 @@
 // =====================================================================
 import {
   db, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query,
-  where, orderBy, limit, serverTimestamp, runTransaction, isFirebaseConfigured
+  where, orderBy, limit, serverTimestamp, runTransaction, increment, isFirebaseConfigured
 } from "./firebase-init.js";
 import { addXp, resolveChallenge, resolveSoloPlay, rankForLevel, xpRequiredForLevel } from "./progression.js";
 import * as local from "./local-store.js";
@@ -25,6 +25,8 @@ const STARTER_PROFILE = {
   rating: 1200,
   points: 1000, // everyone starts with a pot of virtual ELITE Points
   winStreak: 0,
+  rpsWins: 0,
+  connect4Wins: 0,
   cube: { body: "standard", color: "#f5f5f5", effect: "none" }
 };
 
@@ -101,6 +103,18 @@ export async function applySoloResult(uid, currentProfile, didWin) {
     updatedAt: serverTimestamp()
   });
   return progressed;
+}
+
+// Bumps a cumulative win counter on a profile (used for the RPS / Four
+// in a Row "most wins" leaderboards, which track a running tally rather
+// than a single best result like Dice or Cube).
+export async function incrementWinCounter(uid, field) {
+  if (!isFirebaseConfigured) {
+    const current = local.getLocalProfile();
+    const currentCount = current?.[field] ?? 0;
+    return local.updateLocalProfile({ [field]: currentCount + 1 });
+  }
+  await updateDoc(doc(db, "users", uid), { [field]: increment(1), updatedAt: serverTimestamp() });
 }
 
 export async function saveCubeCustomisation(uid, cube) {
@@ -342,5 +356,50 @@ export function subscribeDiceHighScores(callback, top = 20) {
   const q = query(collection(db, "diceHighScores"), orderBy("score", "desc"), limit(top));
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
+}
+
+// --- ELITE Cube best-time board (top 20, LOWEST time wins) ---
+
+export async function submitCubeHighScore(profile, timeMs) {
+  const entry = { eliteId: profile.eliteId, avatar: profile.avatar, timeMs, uid: profile.uid ?? "local" };
+  if (!isFirebaseConfigured) return local.submitLocalCubeHighScore(entry);
+
+  const ref = doc(collection(db, "cubeHighScores"));
+  await setDoc(ref, { ...entry, createdAt: serverTimestamp() });
+
+  // Trim to top 20 fastest times, same approach as the dice board.
+  const q = query(collection(db, "cubeHighScores"), orderBy("timeMs", "asc"), limit(21));
+  const snap = await getDocs(q);
+  const docs = snap.docs;
+  if (docs.length > 20) {
+    await deleteDoc(doc(db, "cubeHighScores", docs[20].id));
+  }
+}
+
+export function subscribeCubeHighScores(callback, top = 20) {
+  if (!isFirebaseConfigured) {
+    callback(local.getLocalCubeHighScores());
+    return () => {};
+  }
+  const q = query(collection(db, "cubeHighScores"), orderBy("timeMs", "asc"), limit(top));
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
+}
+
+// --- RPS / Four in a Row "most wins" boards — these read the running
+// win-counter field straight off each player's profile, same shape as
+// the main rating leaderboard. ---
+
+export function subscribeWinsLeaderboard(field, callback, top = 20) {
+  if (!isFirebaseConfigured) {
+    const profile = local.getLocalProfile();
+    callback(profile && profile[field] ? [profile] : []);
+    return () => {};
+  }
+  const q = query(collection(db, "users"), orderBy(field, "desc"), limit(top));
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ uid: d.id, ...d.data() })));
   });
 }
