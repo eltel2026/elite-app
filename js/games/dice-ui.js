@@ -7,10 +7,11 @@
 import {
   CATEGORIES, CATEGORY_LABELS, rollDice, rerollHeld, scoreCategory, computeTotals, isScorecardComplete
 } from "./dice-logic.js";
-import { el, formatNumber } from "../ui-helpers.js";
+import { el, formatNumber, toast } from "../ui-helpers.js";
 import * as store from "../store.js";
 
 const WIN_SCORE_THRESHOLD = 120; // rough "good game" bar for solo XP purposes
+const EXTRA_ROLL_COSTS = [100, 200]; // cost of a 4th roll, then a 5th roll (max 2 extra per turn)
 
 function emptyScorecard() {
   const sc = {};
@@ -32,6 +33,8 @@ function mountGame(root, ctx, { solo }) {
   let dice = [1, 1, 1, 1, 1];
   let held = [false, false, false, false, false];
   let rollsLeft = 3;
+  let extraRollsThisTurn = 0;
+  let pointsBalance = ctx.profile?.points ?? 0;
   let hasRolledOnce = false;
   let scorecard = emptyScorecard();
   let finished = false;
@@ -42,6 +45,8 @@ function mountGame(root, ctx, { solo }) {
       <div class="dice-row" id="dice-row"></div>
       <p class="center-text text-dim" id="dice-hint">Tap ROLL to start your turn.</p>
       <button class="btn btn-gold" id="dice-roll">🎲 ROLL (<span id="rolls-left">3</span> left)</button>
+      <button class="btn btn-outline mt-8" id="dice-buy-roll" style="display:none;"></button>
+      <p class="center-text text-dim mt-8" id="dice-points">⭐ ${formatNumber(pointsBalance)} points</p>
       <div class="divider"></div>
       <div id="scorecard"></div>
       <div id="dice-finish"></div>
@@ -87,15 +92,56 @@ function mountGame(root, ctx, { solo }) {
     });
   }
 
+  function updateRollUI() {
+    document.getElementById("rolls-left").textContent = rollsLeft;
+    document.getElementById("dice-roll").disabled = rollsLeft === 0 || finished;
+
+    const buyBtn = document.getElementById("dice-buy-roll");
+    const canBuy = rollsLeft === 0 && !finished && extraRollsThisTurn < EXTRA_ROLL_COSTS.length;
+    if (canBuy) {
+      const cost = EXTRA_ROLL_COSTS[extraRollsThisTurn];
+      buyBtn.style.display = "";
+      buyBtn.disabled = pointsBalance < cost;
+      buyBtn.textContent = pointsBalance < cost
+        ? `⭐ Buy extra roll — ${formatNumber(cost)} pts (not enough points)`
+        : `⭐ Buy extra roll — ${formatNumber(cost)} pts`;
+    } else {
+      buyBtn.style.display = "none";
+    }
+
+    document.getElementById("dice-hint").textContent =
+      rollsLeft > 0
+        ? "Tap dice to hold them, then roll again or score."
+        : canBuy
+          ? "No free rolls left — buy an extra roll above, or pick a category below."
+          : "No rolls left — pick a category below.";
+  }
+
+  async function buyExtraRoll() {
+    if (finished || rollsLeft > 0 || extraRollsThisTurn >= EXTRA_ROLL_COSTS.length) return;
+    const cost = EXTRA_ROLL_COSTS[extraRollsThisTurn];
+    try {
+      await store.spendPoints(ctx.myUid, { points: pointsBalance }, cost);
+      pointsBalance -= cost;
+      extraRollsThisTurn += 1;
+      rollsLeft += 1;
+      document.getElementById("dice-points").textContent = `⭐ ${formatNumber(pointsBalance)} points`;
+      updateRollUI();
+    } catch (err) {
+      toast(err.message ?? "Couldn't buy an extra roll.");
+    }
+  }
+  document.getElementById("dice-buy-roll").addEventListener("click", buyExtraRoll);
+
   function lockCategory(cat) {
     if (finished || scorecard[cat] !== null || !hasRolledOnce) return;
     scorecard[cat] = scoreCategory(cat, dice);
     hasRolledOnce = false;
     rollsLeft = 3;
+    extraRollsThisTurn = 0;
     held = [false, false, false, false, false];
-    document.getElementById("rolls-left").textContent = rollsLeft;
+    updateRollUI();
     document.getElementById("dice-hint").textContent = "Tap ROLL to start your next turn.";
-    document.getElementById("dice-roll").disabled = false;
     renderDice();
     renderScorecard();
     if (isScorecardComplete(scorecard)) finishGame();
@@ -106,10 +152,7 @@ function mountGame(root, ctx, { solo }) {
     dice = hasRolledOnce ? rerollHeld(dice, held.map((h, i) => (h ? i : -1)).filter((i) => i >= 0)) : rollDice();
     hasRolledOnce = true;
     rollsLeft -= 1;
-    document.getElementById("rolls-left").textContent = rollsLeft;
-    document.getElementById("dice-hint").textContent =
-      rollsLeft === 0 ? "No rolls left — pick a category below." : "Tap dice to hold them, then roll again or score.";
-    document.getElementById("dice-roll").disabled = rollsLeft === 0;
+    updateRollUI();
     renderDice();
     renderScorecard();
   });
@@ -118,6 +161,7 @@ function mountGame(root, ctx, { solo }) {
     finished = true;
     const totals = computeTotals(scorecard);
     document.getElementById("dice-roll").disabled = true;
+    document.getElementById("dice-buy-roll").style.display = "none";
     const finishEl = document.getElementById("dice-finish");
 
     if (solo) {
@@ -169,24 +213,4 @@ function mountGame(root, ctx, { solo }) {
       } else {
         const winnerUid = mine > theirs ? myUid : oppUid;
         const loserUid = winnerUid === myUid ? oppUid : myUid;
-        finishEl.innerHTML = `<h3 class="center-text mt-16 ${winnerUid === myUid ? "text-gold" : ""}">${winnerUid === myUid ? "🏆 YOU WIN" : "You lose this one"} — ${mine} vs ${theirs}</h3>`;
-        store
-          .completeChallenge(challenge.id, { winnerUid, loserUid, wager: challenge.wager })
-          .catch(() => {})
-          .finally(() => setTimeout(() => ctx.onChallengeSettled(), 1800));
-      }
-      unsub();
-    });
-  }
-
-  if (!solo) {
-    root.querySelector("#dice-hint").insertAdjacentHTML(
-      "beforebegin",
-      `<p class="center-text">⭐ ${ctx.challenge.wager} points on the line · play your own scorecard, highest total wins</p>`
-    );
-  }
-
-  renderDice();
-  renderScorecard();
-  return () => {};
-}
+        finishEl.innerHTML = `
