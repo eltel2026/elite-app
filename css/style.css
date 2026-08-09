@@ -251,12 +251,6 @@ label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom
 .scorecard-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 4px; border-bottom: 1px solid var(--card-border); }
 .scorecard-row button { background: var(--bg-elevated); border: 1px solid var(--card-border); color: var(--gold); border-radius: 8px; padding: 5px 12px; font-weight: 700; cursor: pointer; }
 .scorecard-row .filled { color: var(--text); font-weight: 700; }
-.cat-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 26px; height: 26px; border-radius: 8px; margin-right: 10px;
-  font-size: .78rem; font-weight: 800; color: #fff; padding: 0 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,.35);
-}
 
 /* ---------- Cube ---------- */
 .cube-viewport { display: flex; justify-content: center; padding: 30px 0; perspective: 1200px; position: relative; }
@@ -348,3 +342,54 @@ label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom
   border-radius: 8px;
   box-shadow: inset 0 0 0 3px rgba(0,0,0,.45), 0 1px 3px rgba(0,0,0,.3);
 }
+
+/* ---------- Dice: two-column scorecard + badges ---------- */
+.scorecard-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.scorecard-col .scorecard-row { padding: 7px 2px; }
+.scorecard-col .scorecard-row span:first-child { display: flex; align-items: center; font-size: .82rem; }
+.scorecard-col .scorecard-row button, .scorecard-col .scorecard-row .filled { font-size: .82rem; }
+.bonus-row { border-top: 2px solid var(--gold); margin-top: 4px; }
+.bonus-row .filled { color: var(--gold); }
+.grand-total-row { margin-top: 8px; padding-top: 12px; border-top: 2px solid var(--card-border); }
+.cat-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 24px; height: 24px; border-radius: 7px; margin-right: 8px;
+  font-size: .68rem; font-weight: 800; color: #fff; padding: 0 3px; flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,.35);
+}
+
+/* ---------- Dice arena: score-based glow tiers ---------- */
+.dice-arena { transition: box-shadow .5s ease; }
+.dice-arena.tier-1 { box-shadow: inset 0 0 50px rgba(0,0,0,.25), 0 0 24px rgba(255,209,102,.4), 0 10px 26px rgba(4,60,90,.4); }
+.dice-arena.tier-2 { box-shadow: inset 0 0 50px rgba(0,0,0,.2), 0 0 34px rgba(255,180,60,.6), 0 10px 26px rgba(4,60,90,.4); animation: arenaGlowPulse 2.4s ease-in-out infinite; }
+.dice-arena.tier-3 { box-shadow: inset 0 0 50px rgba(0,0,0,.15), 0 0 46px rgba(255,120,30,.75), 0 10px 26px rgba(4,60,90,.4); animation: arenaGlowPulse 1.4s ease-in-out infinite; }
+.dice-arena.tier-3 .die:not(.held) { box-shadow: 0 0 16px rgba(255,140,20,.85), inset 0 2px 3px rgba(255,255,255,.55); }
+.dice-arena.tier-4 { box-shadow: 0 0 60px rgba(255,90,10,.9), 0 10px 26px rgba(4,60,90,.4); animation: arenaGlowPulse 0.8s ease-in-out infinite; }
+.dice-arena.tier-4 .die:not(.held) {
+  background: linear-gradient(145deg, #ffc247 0%, #ff5b1f 55%, #b3230a 100%);
+  box-shadow: 0 0 20px rgba(255,120,20,.95), inset 0 2px 3px rgba(255,255,255,.6);
+}
+@keyframes arenaGlowPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.28); } }
+
+/* ---------- Bonus celebration ---------- */
+.bonus-celebrate-overlay { position: fixed; inset: 0; z-index: 999; pointer-events: none; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.bonus-celebrate-banner {
+  font-family: 'Orbitron'; font-size: 1.7rem; font-weight: 900; color: var(--gold); text-align: center;
+  text-shadow: 0 0 20px var(--gold-bright), 0 0 40px rgba(255,210,60,.8);
+  animation: bonusFlash 0.5s ease-in-out 4;
+}
+@keyframes bonusFlash { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(1.1); } }
+.confetti-piece {
+  position: absolute; top: -20px; width: 10px; height: 14px; opacity: .95;
+  animation: confettiFall 1.8s cubic-bezier(.25,.46,.45,.94) forwards;
+}
+@keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(110vh) rotate(var(--rot, 360deg)); opacity: 0; } }
+
+/* ---------- Dice high scores list ---------- */
+.hs-list { display: none; margin-top: 12px; }
+.hs-list.open { display: block; }
+.hs-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--card-border); }
+.hs-rank { width: 30px; font-weight: 800; color: var(--text-dim); }
+.hs-avatar { font-size: 1.2rem; }
+.hs-name { flex: 1; font-weight: 600; }
+.hs-score { font-weight: 800; color: var(--gold); }
