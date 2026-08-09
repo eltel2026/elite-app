@@ -228,7 +228,7 @@ label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom
 
 /* ---------- Cube ---------- */
 .cube-viewport { display: flex; justify-content: center; padding: 30px 0; perspective: 1200px; position: relative; }
-.rubik { width: 240px; height: 240px; position: relative; transform-style: preserve-3d; transform: rotateX(-28deg) rotateY(-35deg); transition: transform .15s ease; }
+.rubik { width: 240px; height: 240px; position: relative; z-index: 1; transform-style: preserve-3d; transform: rotateX(-28deg) rotateY(-35deg); transition: transform .15s ease; }
 .rubik-face { position: absolute; width: 240px; height: 240px; display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); gap: 4px; padding: 4px; background: #111; }
 .rubik-face .sticker { border-radius: 3px; }
 .rubik-face.U { transform: rotateX(90deg) translateZ(120px); }
@@ -259,3 +259,44 @@ label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom
 
 .cube-hold-btn { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); z-index: 5; background: #1c1c22; color: #eee; border: 2px solid var(--gold); border-radius: 10px; padding: 10px 8px; font-size: 0.8rem; font-weight: 800; line-height: 1.2; max-width: 56px; }
 .cube-hold-btn.active { background: var(--gold); color: #111; box-shadow: 0 0 14px var(--gold-bright); }
+
+/* Cube "solve aura" — glow + sparkle intensifies as the scramble gets
+   closer to solved, and goes full gold/fire once it's actually solved. */
+.cube-viewport::before,
+.cube-viewport::after {
+  content: ""; position: absolute; z-index: 0; pointer-events: none;
+  opacity: 0; transition: opacity .6s ease, background .6s ease;
+}
+.cube-viewport::before {
+  inset: -25px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,209,102,0.35) 0%, rgba(255,140,0,0.12) 55%, rgba(255,209,102,0) 78%);
+}
+.cube-viewport::after {
+  inset: -35px;
+  background-image:
+    radial-gradient(circle 2px, #fff8dc 98%, transparent),
+    radial-gradient(circle 2px, #fff8dc 98%, transparent),
+    radial-gradient(circle 2px, #fff8dc 98%, transparent),
+    radial-gradient(circle 2px, #fff8dc 98%, transparent),
+    radial-gradient(circle 2px, #fff8dc 98%, transparent),
+    radial-gradient(circle 2px, #fff8dc 98%, transparent);
+  background-position: 10% 15%, 85% 20%, 20% 80%, 75% 75%, 50% 5%, 90% 55%;
+  background-repeat: no-repeat;
+  animation: cubeSparkleSpin 6s linear infinite;
+}
+.cube-viewport.tier-1::before { opacity: 0.5; }
+.cube-viewport.tier-2::before { opacity: 0.75; animation: cubeGlowPulse 2.2s ease-in-out infinite; }
+.cube-viewport.tier-2::after { opacity: 0.5; }
+.cube-viewport.tier-3::before {
+  opacity: 1; animation: cubeGlowPulse 1.4s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(255,215,0,0.5) 0%, rgba(255,90,0,0.2) 55%, rgba(255,215,0,0) 80%);
+}
+.cube-viewport.tier-3::after { opacity: 0.85; animation-duration: 3.5s; }
+.cube-viewport.solved::before {
+  opacity: 1; animation: cubeGlowPulse 0.9s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(255,225,120,0.75) 0%, rgba(255,120,0,0.3) 55%, rgba(255,215,0,0) 82%);
+}
+.cube-viewport.solved::after { opacity: 1; animation-duration: 2s; }
+
+@keyframes cubeGlowPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.4); } }
+@keyframes cubeSparkleSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
