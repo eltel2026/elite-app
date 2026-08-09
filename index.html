@@ -170,12 +170,18 @@
     <div id="cube-root"></div>
   </section>
 
-  <!-- ========== LEADERBOARD ========== -->
+    <!-- ========== LEADERBOARDS ========== -->
   <section class="screen" id="screen-leaderboard">
     <div class="topbar" style="padding-left:0;padding-right:0;">
       <button class="icon-btn" data-nav="screen-dashboard">←</button>
-      <h2>🌎 ELITE League</h2>
+      <h2>🏆 Leaderboards</h2>
       <span></span>
+    </div>
+    <div class="chip-row" id="lb-tabs">
+      <button class="chip selected" data-tab="cube">🧩 Cube</button>
+      <button class="chip" data-tab="rps">🪨 RPS</button>
+      <button class="chip" data-tab="connect4">🔴 Connect 4</button>
+      <button class="chip" data-tab="dice">🎲 Dice</button>
     </div>
     <div class="card" id="leaderboard-list"><div class="spinner"></div></div>
   </section>
@@ -206,7 +212,7 @@
   <!-- ========== BOTTOM NAV (shown once logged in) ========== -->
   <nav class="bottom-nav hidden" id="bottom-nav">
     <button class="nav-btn active" data-nav="screen-dashboard"><span class="nav-icon">🏠</span>Home</button>
-    <button class="nav-btn" data-nav="screen-leaderboard"><span class="nav-icon">🌎</span>League</button>
+    <button class="nav-btn" data-nav="screen-leaderboard"><span class="nav-icon">🏆</span>Boards</button>
     <button class="nav-btn" data-nav="screen-workshop"><span class="nav-icon">🧩</span>Cube</button>
   </nav>
 
