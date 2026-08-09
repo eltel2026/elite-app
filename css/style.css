@@ -220,7 +220,28 @@ label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom
 
 /* ---------- Dice ---------- */
 .dice-row { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
-.die { width: 78px; height: 78px; border-radius: 16px; background: linear-gradient(135deg, #fff, #dcdcdc); color: #111; font-size: 2.2rem; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid transparent; }
+.die {
+  width: 78px; height: 78px; border-radius: 18px;
+  background: linear-gradient(145deg, #ffffff 0%, #f1f1f1 55%, #d8d8d8 100%);
+  box-shadow: 0 6px 10px rgba(0,0,0,.35), inset 0 2px 3px rgba(255,255,255,.9), inset 0 -6px 8px rgba(0,0,0,.12);
+  cursor: pointer; border: 3px solid transparent; padding: 10px; box-sizing: border-box;
+  transition: transform .15s ease;
+}
+.die.held { border-color: var(--gold); background: linear-gradient(145deg, var(--gold-bright), var(--gold) 60%, #c9922f 100%); }
+.die-face { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 100%; height: 100%; }
+.die-face .pip {
+  width: 68%; height: 68%; margin: auto; border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #555, #0a0a0a 70%);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.35), 0 1px 1px rgba(0,0,0,.4);
+}
+.die.held .die-face .pip { background: radial-gradient(circle at 32% 28%, #3a2a08, #000 70%); }
+.die.rolling { animation: diceTumble .42s ease-in-out; }
+@keyframes diceTumble {
+  0%   { transform: rotate(0deg) scale(1); }
+  30%  { transform: rotate(140deg) scale(1.12); }
+  60%  { transform: rotate(260deg) scale(0.95); }
+  100% { transform: rotate(360deg) scale(1); }
+}
 .scorecard-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 4px; border-bottom: 1px solid var(--card-border); }
 .scorecard-row button { background: var(--bg-elevated); border: 1px solid var(--card-border); color: var(--gold); border-radius: 8px; padding: 5px 12px; font-weight: 700; cursor: pointer; }
 .scorecard-row .filled { color: var(--text); font-weight: 700; }
