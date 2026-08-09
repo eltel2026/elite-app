@@ -108,6 +108,20 @@ export async function saveCubeCustomisation(uid, cube) {
   await updateDoc(doc(db, "users", uid), { cube, updatedAt: serverTimestamp() });
 }
 
+// Deducts ELITE Points for a paid perk (e.g. a bonus dice roll). Throws
+// if the profile doesn't have enough points so callers can show a toast
+// instead of ever letting a balance go negative.
+export async function spendPoints(uid, currentProfile, amount) {
+  const currentPoints = currentProfile.points ?? 0;
+  if (currentPoints < amount) {
+    throw new Error(`Not enough ELITE Points — you need ${amount}, you have ${currentPoints}.`);
+  }
+  const newPoints = currentPoints - amount;
+  if (!isFirebaseConfigured) return local.updateLocalProfile({ points: newPoints });
+  await updateDoc(doc(db, "users", uid), { points: newPoints, updatedAt: serverTimestamp() });
+  return newPoints;
+}
+
 // --- Challenges ---
 // A challenge document:
 // {
@@ -235,66 +249,4 @@ export async function transactionalUpdateChallenge(challengeId, updateFn) {
 }
 
 // Finalises a challenge: reads both live profiles inside a transaction,
-// runs the shared progression math, and writes both profiles + the
-// challenge's result atomically so points/rating can never double-apply.
-export async function completeChallenge(challengeId, { winnerUid, loserUid, wager }) {
-  const challengeRef = doc(db, "challenges", challengeId);
-  const winnerRef = doc(db, "users", winnerUid);
-  const loserRef = doc(db, "users", loserUid);
-
-  await runTransaction(db, async (tx) => {
-    const challengeSnap = await tx.get(challengeRef);
-    if (!challengeSnap.exists()) throw new Error("Challenge no longer exists.");
-    if (challengeSnap.data().status === "completed") return; // already settled
-
-    const winnerSnap = await tx.get(winnerRef);
-    const loserSnap = await tx.get(loserRef);
-    const outcome = resolveChallenge({
-      winner: winnerSnap.data(),
-      loser: loserSnap.data(),
-      wager
-    });
-
-    tx.update(winnerRef, {
-      level: outcome.winner.level,
-      xp: outcome.winner.xp,
-      xpToNext: outcome.winner.xpToNext,
-      rank: outcome.winner.rank,
-      rating: outcome.winner.rating,
-      points: outcome.winner.points,
-      winStreak: outcome.winner.winStreak,
-      updatedAt: serverTimestamp()
-    });
-    tx.update(loserRef, {
-      level: outcome.loser.level,
-      xp: outcome.loser.xp,
-      xpToNext: outcome.loser.xpToNext,
-      rank: outcome.loser.rank,
-      rating: outcome.loser.rating,
-      points: outcome.loser.points,
-      winStreak: outcome.loser.winStreak,
-      updatedAt: serverTimestamp()
-    });
-    tx.update(challengeRef, {
-      status: "completed",
-      result: { winnerUid, loserUid },
-      updatedAt: serverTimestamp()
-    });
-  });
-}
-
-// --- Leaderboard ---
-
-export function subscribeLeaderboard(callback, top = 50) {
-  if (!isFirebaseConfigured) {
-    // Local Demo Mode: show a "leaderboard of one" so the screen still
-    // makes sense while previewing the app before Firebase is set up.
-    const profile = local.getLocalProfile();
-    callback(profile ? [profile] : []);
-    return () => {};
-  }
-  const q = query(collection(db, "users"), orderBy("rating", "desc"), limit(top));
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => ({ uid: d.id, ...d.data() })));
-  });
-}
+// runs the shared prog
