@@ -9,7 +9,7 @@
 //   challenges/{id}     a 1v1 challenge (live or async), see below
 // =====================================================================
 import {
-  db, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query,
+  db, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query,
   where, orderBy, limit, serverTimestamp, runTransaction, isFirebaseConfigured
 } from "./firebase-init.js";
 import { addXp, resolveChallenge, resolveSoloPlay, rankForLevel, xpRequiredForLevel } from "./progression.js";
@@ -249,4 +249,98 @@ export async function transactionalUpdateChallenge(challengeId, updateFn) {
 }
 
 // Finalises a challenge: reads both live profiles inside a transaction,
-// runs the shared prog
+// runs the shared progression math, and writes both profiles + the
+// challenge's result atomically so points/rating can never double-apply.
+export async function completeChallenge(challengeId, { winnerUid, loserUid, wager }) {
+  const challengeRef = doc(db, "challenges", challengeId);
+  const winnerRef = doc(db, "users", winnerUid);
+  const loserRef = doc(db, "users", loserUid);
+
+  await runTransaction(db, async (tx) => {
+    const challengeSnap = await tx.get(challengeRef);
+    if (!challengeSnap.exists()) throw new Error("Challenge no longer exists.");
+    if (challengeSnap.data().status === "completed") return; // already settled
+
+    const winnerSnap = await tx.get(winnerRef);
+    const loserSnap = await tx.get(loserRef);
+    const outcome = resolveChallenge({
+      winner: winnerSnap.data(),
+      loser: loserSnap.data(),
+      wager
+    });
+
+    tx.update(winnerRef, {
+      level: outcome.winner.level,
+      xp: outcome.winner.xp,
+      xpToNext: outcome.winner.xpToNext,
+      rank: outcome.winner.rank,
+      rating: outcome.winner.rating,
+      points: outcome.winner.points,
+      winStreak: outcome.winner.winStreak,
+      updatedAt: serverTimestamp()
+    });
+    tx.update(loserRef, {
+      level: outcome.loser.level,
+      xp: outcome.loser.xp,
+      xpToNext: outcome.loser.xpToNext,
+      rank: outcome.loser.rank,
+      rating: outcome.loser.rating,
+      points: outcome.loser.points,
+      winStreak: outcome.loser.winStreak,
+      updatedAt: serverTimestamp()
+    });
+    tx.update(challengeRef, {
+      status: "completed",
+      result: { winnerUid, loserUid },
+      updatedAt: serverTimestamp()
+    });
+  });
+}
+
+// --- Leaderboard ---
+
+export function subscribeLeaderboard(callback, top = 50) {
+  if (!isFirebaseConfigured) {
+    // Local Demo Mode: show a "leaderboard of one" so the screen still
+    // makes sense while previewing the app before Firebase is set up.
+    const profile = local.getLocalProfile();
+    callback(profile ? [profile] : []);
+    return () => {};
+  }
+  const q = query(collection(db, "users"), orderBy("rating", "desc"), limit(top));
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ uid: d.id, ...d.data() })));
+  });
+}
+
+// --- ELITE Dice high scores (separate global top-20 board, independent
+// of the main ELITE League rating leaderboard) ---
+
+export async function submitDiceHighScore(profile, score) {
+  const entry = { eliteId: profile.eliteId, avatar: profile.avatar, score, uid: profile.uid ?? "local" };
+  if (!isFirebaseConfigured) return local.submitLocalDiceHighScore(entry);
+
+  const ref = doc(collection(db, "diceHighScores"));
+  await setDoc(ref, { ...entry, createdAt: serverTimestamp() });
+
+  // Trim to top 20 so the board never grows unbounded. Reads the current
+  // top 21 and deletes anything past rank 20 — cheap since it only runs
+  // right after a new score is submitted, not on every load.
+  const q = query(collection(db, "diceHighScores"), orderBy("score", "desc"), limit(21));
+  const snap = await getDocs(q);
+  const docs = snap.docs;
+  if (docs.length > 20) {
+    await deleteDoc(doc(db, "diceHighScores", docs[20].id));
+  }
+}
+
+export function subscribeDiceHighScores(callback, top = 20) {
+  if (!isFirebaseConfigured) {
+    callback(local.getLocalDiceHighScores());
+    return () => {};
+  }
+  const q = query(collection(db, "diceHighScores"), orderBy("score", "desc"), limit(top));
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
+}
