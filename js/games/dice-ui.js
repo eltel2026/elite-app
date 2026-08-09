@@ -35,6 +35,27 @@ function diceFace(v) {
   return `<div class="die-face">${cells}</div>`;
 }
 
+const CATEGORY_BADGE = {
+  ones: { icon: "1", color: "#e63946" },
+  twos: { icon: "2", color: "#e6633f" },
+  threes: { icon: "3", color: "#e68b2f" },
+  fours: { icon: "4", color: "#2ecc71" },
+  fives: { icon: "5", color: "#22a3d1" },
+  sixes: { icon: "6", color: "#3d7dfa" },
+  threeKind: { icon: "🎲🎲🎲", color: "#a259ff" },
+  fourKind: { icon: "🎲🎲🎲🎲", color: "#7b3ff2" },
+  fullHouse: { icon: "🏠", color: "#ff6b9d" },
+  smallStraight: { icon: "📈", color: "#22c1a3" },
+  largeStraight: { icon: "📈+", color: "#1a9e85" },
+  yahtzee: { icon: "👑", color: "#ffd23f" },
+  chance: { icon: "🎯", color: "#8a94a6" }
+};
+
+function categoryBadgeHTML(cat) {
+  const b = CATEGORY_BADGE[cat] ?? { icon: "•", color: "#8a94a6" };
+  return `<span class="cat-badge" style="background:${b.color}">${b.icon}</span>`;
+}
+
 export function mount(root, ctx) {
   root.innerHTML = "";
   if (ctx.mode === "solo") return mountGame(root, ctx, { solo: true });
@@ -54,11 +75,13 @@ function mountGame(root, ctx, { solo }) {
   root.appendChild(
     el(`
     <div>
-      <div class="dice-row" id="dice-row"></div>
-      <p class="center-text text-dim" id="dice-hint">Tap ROLL to start your turn.</p>
-      <button class="btn btn-gold" id="dice-roll">🎲 ROLL (<span id="rolls-left">3</span> left)</button>
-      <button class="btn btn-outline mt-8" id="dice-buy-roll" style="display:none;"></button>
-      <p class="center-text text-dim mt-8" id="dice-points">⭐ ${formatNumber(pointsBalance)} points</p>
+      <div class="dice-arena">
+        <div class="dice-row" id="dice-row"></div>
+        <p class="center-text dice-arena-hint" id="dice-hint">Tap ROLL to start your turn.</p>
+        <button class="btn btn-gold" id="dice-roll">🎲 ROLL (<span id="rolls-left">3</span> left)</button>
+        <button class="btn btn-outline mt-8" id="dice-buy-roll" style="display:none;"></button>
+        <p class="center-text dice-arena-hint mt-8" id="dice-points">⭐ ${formatNumber(pointsBalance)} points</p>
+      </div>
       <div class="divider"></div>
       <div id="scorecard"></div>
       <div id="dice-finish"></div>
@@ -90,7 +113,7 @@ function mountGame(root, ctx, { solo }) {
         const preview = !filled && hasRolledOnce ? scoreCategory(cat, dice) : null;
         return `
         <div class="scorecard-row">
-          <span>${CATEGORY_LABELS[cat]}</span>
+          <span>${categoryBadgeHTML(cat)}${CATEGORY_LABELS[cat]}</span>
           ${filled
             ? `<span class="filled">${scorecard[cat]}</span>`
             : `<button data-cat="${cat}" ${hasRolledOnce ? "" : "disabled"}>${preview ?? "—"}</button>`}
@@ -243,7 +266,7 @@ function mountGame(root, ctx, { solo }) {
   }
 
   if (!solo) {
-    root.querySelector("#dice-hint").insertAdjacentHTML(
+    root.querySelector(".dice-arena").insertAdjacentHTML(
       "beforebegin",
       `<p class="center-text">⭐ ${ctx.challenge.wager} points on the line · play your own scorecard, highest total wins</p>`
     );
