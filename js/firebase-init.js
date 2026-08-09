@@ -18,7 +18,7 @@ export const isFirebaseConfigured = Boolean(
 
 export let app, auth, db;
 export let createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged;
-export let doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, limit, serverTimestamp, runTransaction;
+export let doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, limit, serverTimestamp, runTransaction, increment;
 
 if (isFirebaseConfigured) {
   const [{ initializeApp }, authMod, fsMod] = await Promise.all([
@@ -32,5 +32,5 @@ if (isFirebaseConfigured) {
   db = fsMod.getFirestore(app);
 
   ({ createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } = authMod);
-  ({ doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, limit, serverTimestamp, runTransaction } = fsMod);
+  ({ doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, limit, serverTimestamp, runTransaction, increment } = fsMod);
 }
