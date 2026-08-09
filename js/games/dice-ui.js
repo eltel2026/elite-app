@@ -213,4 +213,24 @@ function mountGame(root, ctx, { solo }) {
       } else {
         const winnerUid = mine > theirs ? myUid : oppUid;
         const loserUid = winnerUid === myUid ? oppUid : myUid;
-        finishEl.innerHTML = `
+        finishEl.innerHTML = `<h3 class="center-text mt-16 ${winnerUid === myUid ? "text-gold" : ""}">${winnerUid === myUid ? "🏆 YOU WIN" : "You lose this one"} — ${mine} vs ${theirs}</h3>`;
+        store
+          .completeChallenge(challenge.id, { winnerUid, loserUid, wager: challenge.wager })
+          .catch(() => {})
+          .finally(() => setTimeout(() => ctx.onChallengeSettled(), 1800));
+      }
+      unsub();
+    });
+  }
+
+  if (!solo) {
+    root.querySelector("#dice-hint").insertAdjacentHTML(
+      "beforebegin",
+      `<p class="center-text">⭐ ${ctx.challenge.wager} points on the line · play your own scorecard, highest total wins</p>`
+    );
+  }
+
+  renderDice();
+  renderScorecard();
+  return () => {};
+}
