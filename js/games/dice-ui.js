@@ -56,6 +56,28 @@ function categoryBadgeHTML(cat) {
   return `<span class="cat-badge" style="background:${b.color}">${b.icon}</span>`;
 }
 
+const UPPER_CATS = CATEGORIES.slice(0, 6);
+const LOWER_CATS = CATEGORIES.slice(6);
+
+// Confetti + flashing banner played the moment the upper-section bonus
+// is first earned in a game.
+function celebrateBonus() {
+  const overlay = document.createElement("div");
+  overlay.className = "bonus-celebrate-overlay";
+  overlay.innerHTML = '<div class="bonus-celebrate-banner">🎉 BONUS WON! 🎉</div>';
+  for (let i = 0; i < 40; i++) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.animationDelay = `${(Math.random() * 0.4).toFixed(2)}s`;
+    piece.style.setProperty("--rot", `${Math.floor(Math.random() * 360)}deg`);
+    piece.style.background = ["#f2c14e", "#ffe28a", "#ffffff", "#ffd23f", "#ff8c42"][Math.floor(Math.random() * 5)];
+    overlay.appendChild(piece);
+  }
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.remove(), 2200);
+}
+
 export function mount(root, ctx) {
   root.innerHTML = "";
   if (ctx.mode === "solo") return mountGame(root, ctx, { solo: true });
@@ -71,6 +93,7 @@ function mountGame(root, ctx, { solo }) {
   let hasRolledOnce = false;
   let scorecard = emptyScorecard();
   let finished = false;
+  let bonusCelebrated = false;
 
   root.appendChild(
     el(`
@@ -107,8 +130,9 @@ function mountGame(root, ctx, { solo }) {
   function renderScorecard() {
     const wrap = document.getElementById("scorecard");
     const totals = computeTotals(scorecard);
-    wrap.innerHTML =
-      CATEGORIES.map((cat) => {
+
+    function rowsFor(cats) {
+      return cats.map((cat) => {
         const filled = scorecard[cat] !== null;
         const preview = !filled && hasRolledOnce ? scoreCategory(cat, dice) : null;
         return `
@@ -118,13 +142,42 @@ function mountGame(root, ctx, { solo }) {
             ? `<span class="filled">${scorecard[cat]}</span>`
             : `<button data-cat="${cat}" ${hasRolledOnce ? "" : "disabled"}>${preview ?? "—"}</button>`}
         </div>`;
-      }).join("") +
-      `<div class="scorecard-row"><span>Upper bonus (63+)</span><span class="filled">${totals.bonus}</span></div>
-       <div class="scorecard-row"><strong>Grand Total</strong><strong class="text-gold">${totals.grandTotal}</strong></div>`;
+      }).join("");
+    }
+
+    wrap.innerHTML = `
+      <div class="scorecard-cols">
+        <div class="scorecard-col">
+          ${rowsFor(UPPER_CATS)}
+          <div class="scorecard-row bonus-row"><span>⭐ Bonus (63+)</span><span class="filled">${totals.bonus}</span></div>
+        </div>
+        <div class="scorecard-col">
+          ${rowsFor(LOWER_CATS)}
+        </div>
+      </div>
+      <div class="scorecard-row grand-total-row"><strong>Grand Total</strong><strong class="text-gold">${totals.grandTotal}</strong></div>
+    `;
 
     wrap.querySelectorAll("button[data-cat]").forEach((btn) => {
       btn.addEventListener("click", () => lockCategory(btn.dataset.cat));
     });
+
+    updateArenaGlow(totals.grandTotal);
+    if (totals.bonus > 0 && !bonusCelebrated) {
+      bonusCelebrated = true;
+      celebrateBonus();
+    }
+  }
+
+  // The dice arena's glow ramps up as the running total climbs, ending
+  // in a full "on fire" look for a genuinely great scorecard.
+  function updateArenaGlow(total) {
+    const arena = document.querySelector(".dice-arena");
+    arena.classList.remove("tier-1", "tier-2", "tier-3", "tier-4");
+    if (total >= 200) arena.classList.add("tier-4");
+    else if (total >= 150) arena.classList.add("tier-3");
+    else if (total >= 100) arena.classList.add("tier-2");
+    else if (total >= 50) arena.classList.add("tier-1");
   }
 
   function updateRollUI() {
@@ -208,20 +261,46 @@ function mountGame(root, ctx, { solo }) {
 
     if (solo) {
       const didWin = totals.grandTotal >= WIN_SCORE_THRESHOLD;
+      if (ctx.profile) store.submitDiceHighScore(ctx.profile, totals.grandTotal).catch(() => {});
       finishEl.innerHTML = `
         <h2 class="center-text text-gold mt-16">Final Score: ${totals.grandTotal}</h2>
         <p class="center-text">${didWin ? "🏆 Great scorecard!" : "Keep practicing — chase that ELITE score!"}</p>
         <button class="btn btn-gold" id="dice-again">PLAY AGAIN</button>
         <button class="btn btn-outline mt-8" id="dice-done">DONE</button>
+        <button class="btn btn-outline mt-8" id="dice-highscores-btn">🏆 View Top 20</button>
+        <div id="dice-highscores-list" class="hs-list"></div>
       `;
       document.getElementById("dice-again").addEventListener("click", () => {
         root.innerHTML = "";
         mountGame(root, ctx, { solo: true });
       });
       document.getElementById("dice-done").addEventListener("click", () => ctx.onSoloResult(didWin));
+      document.getElementById("dice-highscores-btn").addEventListener("click", showHighScores);
     } else {
       submitChallengeResult(totals.grandTotal, finishEl);
     }
+  }
+
+  function showHighScores() {
+    const listEl = document.getElementById("dice-highscores-list");
+    if (listEl.classList.contains("open")) {
+      listEl.classList.remove("open");
+      listEl.innerHTML = "";
+      return;
+    }
+    listEl.classList.add("open");
+    listEl.innerHTML = '<p class="center-text text-dim">Loading...</p>';
+    store.subscribeDiceHighScores((rows) => {
+      listEl.innerHTML = rows.length
+        ? rows.map((r, i) => `
+            <div class="hs-row">
+              <span class="hs-rank">#${i + 1}</span>
+              <span class="hs-avatar">${r.avatar ?? "🙂"}</span>
+              <span class="hs-name">${r.eliteId ?? "Guest"}</span>
+              <span class="hs-score">${r.score}</span>
+            </div>`).join("")
+        : '<p class="center-text text-dim">No scores yet — be the first!</p>';
+    });
   }
 
   async function submitChallengeResult(score, finishEl) {
