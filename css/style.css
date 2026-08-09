@@ -227,7 +227,7 @@ label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom
 .scorecard-row .filled { color: var(--text); font-weight: 700; }
 
 /* ---------- Cube ---------- */
-.cube-viewport { display: flex; justify-content: center; padding: 30px 0; perspective: 1200px; }
+.cube-viewport { display: flex; justify-content: center; padding: 30px 0; perspective: 1200px; position: relative; }
 .rubik { width: 240px; height: 240px; position: relative; transform-style: preserve-3d; transform: rotateX(-28deg) rotateY(-35deg); transition: transform .15s ease; }
 .rubik-face { position: absolute; width: 240px; height: 240px; display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); gap: 4px; padding: 4px; background: #111; }
 .rubik-face .sticker { border-radius: 3px; }
@@ -256,3 +256,6 @@ label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom
 .divider { height: 1px; background: var(--card-border); margin: 16px 0; }
 .spinner { width: 22px; height: 22px; border: 3px solid var(--card-border); border-top-color: var(--gold); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.cube-hold-btn { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); z-index: 5; background: #1c1c22; color: #eee; border: 2px solid var(--gold); border-radius: 10px; padding: 10px 8px; font-size: 0.8rem; font-weight: 800; line-height: 1.2; max-width: 56px; }
+.cube-hold-btn.active { background: var(--gold); color: #111; box-shadow: 0 0 14px var(--gold-bright); }
