@@ -295,6 +295,8 @@ function wireChallengeSetup() {
 
 // ---------- Launching games ----------
 
+const WIN_COUNTER_FIELD = { rps: "rpsWins", connect4: "connect4Wins" };
+
 function openSoloGame(gameId) {
   const meta = GAMES.find((g) => g.id === gameId);
   cleanupCurrentGame();
@@ -308,6 +310,8 @@ function openSoloGame(gameId) {
       try {
         const progressed = await store.applySoloResult(state.user.uid, state.profile, didWin);
         if (progressed?.leveledUp) toast(`🎉 Level up! You're now Level ${progressed.level} (${progressed.rank})`);
+        const counterField = WIN_COUNTER_FIELD[gameId];
+        if (didWin && counterField) await store.incrementWinCounter(state.user.uid, counterField);
       } catch (err) {
         toast(err.message ?? "Couldn't save your progress.");
       }
