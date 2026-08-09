@@ -19,8 +19,20 @@ function emptyScorecard() {
   return sc;
 }
 
+const PIP_PATTERNS = {
+  1: [4],
+  2: [0, 8],
+  3: [0, 4, 8],
+  4: [0, 2, 6, 8],
+  5: [0, 2, 4, 6, 8],
+  6: [0, 2, 3, 5, 6, 8]
+};
+
 function diceFace(v) {
-  return ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][v] ?? v;
+  const pips = PIP_PATTERNS[v] ?? [];
+  let cells = "";
+  for (let i = 0; i < 9; i++) cells += pips.includes(i) ? '<span class="pip"></span>' : "<span></span>";
+  return `<div class="die-face">${cells}</div>`;
 }
 
 export function mount(root, ctx) {
@@ -149,12 +161,19 @@ function mountGame(root, ctx, { solo }) {
 
   document.getElementById("dice-roll").addEventListener("click", () => {
     if (rollsLeft === 0 || finished) return;
-    dice = hasRolledOnce ? rerollHeld(dice, held.map((h, i) => (h ? i : -1)).filter((i) => i >= 0)) : rollDice();
-    hasRolledOnce = true;
-    rollsLeft -= 1;
-    updateRollUI();
-    renderDice();
-    renderScorecard();
+    const heldIdx = held.map((h, i) => (h ? i : -1)).filter((i) => i >= 0);
+    document.getElementById("dice-roll").disabled = true;
+    document.querySelectorAll("#dice-row .die").forEach((d, i) => {
+      if (!held[i]) d.classList.add("rolling");
+    });
+    setTimeout(() => {
+      dice = hasRolledOnce ? rerollHeld(dice, heldIdx) : rollDice();
+      hasRolledOnce = true;
+      rollsLeft -= 1;
+      updateRollUI();
+      renderDice();
+      renderScorecard();
+    }, 420);
   });
 
   function finishGame() {
