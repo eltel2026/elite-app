@@ -220,23 +220,23 @@ label { display: block; font-size: .85rem; color: var(--text-dim); margin-bottom
 
 /* ---------- Dice ---------- */
 .dice-row { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
-.die { width: 56px; height: 56px; border-radius: 12px; background: linear-gradient(135deg, #fff, #dcdcdc); color: #111; font-size: 1.6rem; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid transparent; }
+.die { width: 78px; height: 78px; border-radius: 16px; background: linear-gradient(135deg, #fff, #dcdcdc); color: #111; font-size: 2.2rem; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid transparent; }
 .die.held { border-color: var(--gold); background: linear-gradient(135deg, var(--gold-bright), var(--gold)); }
 .scorecard-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 4px; border-bottom: 1px solid var(--card-border); }
 .scorecard-row button { background: var(--bg-elevated); border: 1px solid var(--card-border); color: var(--gold); border-radius: 8px; padding: 5px 12px; font-weight: 700; cursor: pointer; }
 .scorecard-row .filled { color: var(--text); font-weight: 700; }
 
 /* ---------- Cube ---------- */
-.cube-viewport { display: flex; justify-content: center; padding: 30px 0; perspective: 900px; }
-.rubik { width: 160px; height: 160px; position: relative; transform-style: preserve-3d; transform: rotateX(-28deg) rotateY(-35deg); transition: transform .15s ease; }
-.rubik-face { position: absolute; width: 160px; height: 160px; display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); gap: 3px; padding: 3px; background: #111; }
+.cube-viewport { display: flex; justify-content: center; padding: 30px 0; perspective: 1200px; }
+.rubik { width: 240px; height: 240px; position: relative; transform-style: preserve-3d; transform: rotateX(-28deg) rotateY(-35deg); transition: transform .15s ease; }
+.rubik-face { position: absolute; width: 240px; height: 240px; display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); gap: 4px; padding: 4px; background: #111; }
 .rubik-face .sticker { border-radius: 3px; }
-.rubik-face.U { transform: rotateX(90deg) translateZ(80px); }
-.rubik-face.D { transform: rotateX(-90deg) translateZ(80px); }
-.rubik-face.F { transform: translateZ(80px); }
-.rubik-face.B { transform: rotateY(180deg) translateZ(80px); }
-.rubik-face.L { transform: rotateY(-90deg) translateZ(80px); }
-.rubik-face.R { transform: rotateY(90deg) translateZ(80px); }
+.rubik-face.U { transform: rotateX(90deg) translateZ(120px); }
+.rubik-face.D { transform: rotateX(-90deg) translateZ(120px); }
+.rubik-face.F { transform: translateZ(120px); }
+.rubik-face.B { transform: rotateY(180deg) translateZ(120px); }
+.rubik-face.L { transform: rotateY(-90deg) translateZ(120px); }
+.rubik-face.R { transform: rotateY(90deg) translateZ(120px); }
 .cube-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
 .cube-controls button { padding: 12px 0; border-radius: 10px; border: 1px solid var(--card-border); background: var(--card); color: var(--text); font-weight: 800; font-family: 'Orbitron'; cursor: pointer; }
 .timer-display { text-align: center; font-family: 'Orbitron'; font-size: 2.2rem; color: var(--gold); font-weight: 900; letter-spacing: .05em; }
