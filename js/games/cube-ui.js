@@ -168,7 +168,7 @@ function mountGame(root, ctx, { solo, seed }) {
   enableCubeControls(rubikEl, {
     getHoldActive: () => holdActive,
     canMove: () => movesEnabled && !finished,
-    onFaceMove: (face, dir) => performMove(dir === 1 ? `${face}'` : face)
+    onFaceMove: (face, dir) => performMove(dir === 1 ? face : `${face}'`)
   });
 
   const holdBtn = document.getElementById("cube-hold-btn");
