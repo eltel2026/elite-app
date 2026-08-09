@@ -72,5 +72,13 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if isSignedIn();
     }
+
+    // ELITE Cube best-time board — same shape/rules as diceHighScores.
+    match /cubeHighScores/{entryId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if false;
+      allow delete: if isSignedIn();
+    }
   }
 }
