@@ -228,12 +228,12 @@ function enableCubeControls(cubeEl, { getHoldActive, canMove, onFaceMove }) {
       if (!s) return;
       const dx = e.clientX - s.sx;
       const dy = e.clientY - s.sy;
-      if (Math.hypot(dx, dy) < 18) return; // too small — treat as a tap, not a turn
+            if (Math.hypot(dx, dy) < 45) return; // require a clear, deliberate swipe — not a small/ambiguous flick
       if (canMove && !canMove()) return;
       const relX = s.sx - s.cx;
       const relY = s.sy - s.cy;
-      const cross = relX * dy - relY * dx; // >0 = clockwise sweep around the face's centre
-      onFaceMove(s.face, cross > 0 ? 1 : -1);
+      const cross = relX * dy - relY * dx;
+      onFaceMove(s.face, cross > 0 ? -1 : 1);
       return;
     }
     if (!dragging) return;
