@@ -23,6 +23,7 @@ export function mount(root, ctx) {
 function renderCubeHTML() {
   return `
     <div class="cube-viewport">
+      <button class="cube-hold-btn" id="cube-hold-btn" type="button">🔒 Hold</button>
       <div class="rubik" id="rubik">
         ${FACE_ORDER.map((f) => `<div class="rubik-face ${f}" data-face="${f}"></div>`).join("")}
       </div>
@@ -43,6 +44,96 @@ function paintCube(state) {
       faceEl.appendChild(sticker);
     }
   });
+}
+
+// Two interaction modes share one pointer listener set on the cube:
+//   - Hold OFF (default): dragging spins the cube around so you can look
+//     at any face — pure viewing, no move is made.
+//   - Hold ON: the view freezes, and swiping across a face twists that
+//     face instead. Whichever face was actually touched is looked up via
+//     the DOM (so it's always correct no matter how the cube is
+//     currently rotated), and the turn direction is found from the
+//     rotational sense of the swipe around that face's on-screen centre —
+//     e.g. dragging along the top edge to the right is a clockwise turn,
+//     the same way turning a steering wheel works. Because you can only
+//     ever swipe a face that's actually facing the camera, "clockwise on
+//     screen" always matches the standard "clockwise looking at that
+//     face from outside" cube notation, regardless of the viewing angle.
+function enableCubeControls(cubeEl, { getHoldActive, canMove, onFaceMove }) {
+  let rotX = -28;
+  let rotY = -35;
+  let dragging = false;
+  let lastX = 0;
+  let lastY = 0;
+  let swipe = null;
+
+  cubeEl.style.touchAction = "none";
+  cubeEl.style.cursor = "grab";
+
+  function applyRotation() {
+    cubeEl.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+  }
+  applyRotation();
+
+  cubeEl.addEventListener("pointerdown", (e) => {
+    if (getHoldActive()) {
+      const faceEl = e.target.closest(".rubik-face[data-face]");
+      if (!faceEl) return;
+      const rect = faceEl.getBoundingClientRect();
+      swipe = {
+        face: faceEl.dataset.face,
+        cx: rect.left + rect.width / 2,
+        cy: rect.top + rect.height / 2,
+        sx: e.clientX,
+        sy: e.clientY
+      };
+      cubeEl.setPointerCapture?.(e.pointerId);
+      return;
+    }
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    cubeEl.style.cursor = "grabbing";
+    cubeEl.style.transition = "none";
+    cubeEl.setPointerCapture?.(e.pointerId);
+  });
+
+  cubeEl.addEventListener("pointermove", (e) => {
+    if (getHoldActive() || !dragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    rotY += dx * 0.5;
+    rotX = Math.max(-90, Math.min(90, rotX - dy * 0.5));
+    applyRotation();
+  });
+
+  function endGesture(e) {
+    if (getHoldActive()) {
+      const s = swipe;
+      swipe = null;
+      if (!s) return;
+      const dx = e.clientX - s.sx;
+      const dy = e.clientY - s.sy;
+      if (Math.hypot(dx, dy) < 18) return; // too small — treat as a tap, not a turn
+      if (canMove && !canMove()) return;
+      const relX = s.sx - s.cx;
+      const relY = s.sy - s.cy;
+      const cross = relX * dy - relY * dx; // >0 = clockwise sweep around the face's centre
+      onFaceMove(s.face, cross > 0 ? 1 : -1);
+      return;
+    }
+    if (!dragging) return;
+    dragging = false;
+    cubeEl.style.cursor = "grab";
+    cubeEl.style.transition = "transform .15s ease";
+  }
+  cubeEl.addEventListener("pointerup", endGesture);
+  cubeEl.addEventListener("pointercancel", endGesture);
+  cubeEl.addEventListener("pointerleave", endGesture);
+
+  return { reset: () => { rotX = -28; rotY = -35; applyRotation(); } };
 }
 
 function mountGame(root, ctx, { solo, seed }) {
@@ -71,11 +162,39 @@ function mountGame(root, ctx, { solo, seed }) {
   paintCube(state);
   const rubikEl = document.getElementById("rubik");
   if (rubikEl && ctx.profile?.cube) applyCubeSkin(rubikEl, ctx.profile.cube);
-    enableDragRotate(rubikEl);
+
+  let holdActive = false;
+  let movesEnabled = false;
+  enableCubeControls(rubikEl, {
+    getHoldActive: () => holdActive,
+    canMove: () => movesEnabled && !finished,
+    onFaceMove: (face, dir) => performMove(dir === 1 ? face : `${face}'`)
+  });
+
+  const holdBtn = document.getElementById("cube-hold-btn");
+  holdBtn.addEventListener("click", () => {
+    holdActive = !holdActive;
+    holdBtn.classList.toggle("active", holdActive);
+    holdBtn.textContent = holdActive ? "🔓 Holding" : "🔒 Hold";
+    if (movesEnabled && !finished) {
+      document.getElementById("cube-hint").textContent = holdActive
+        ? "Cube held — swipe a face to turn it."
+        : "Drag to look around the cube.";
+    }
+  });
+
   setControlsEnabled(false);
 
   function setControlsEnabled(enabled) {
+    movesEnabled = enabled;
     document.querySelectorAll("#cube-controls button").forEach((b) => (b.disabled = !enabled));
+  }
+
+  function performMove(move) {
+    if (finished || !movesEnabled) return;
+    state = applyMove(state, move);
+    paintCube(state);
+    if (isSolved(state)) onSolved();
   }
 
   document.getElementById("cube-go").addEventListener("click", (e) => {
@@ -115,10 +234,8 @@ function mountGame(root, ctx, { solo, seed }) {
 
   document.getElementById("cube-controls").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-move]");
-    if (!btn || finished) return;
-    state = applyMove(state, btn.dataset.move);
-    paintCube(state);
-    if (isSolved(state)) onSolved();
+    if (!btn) return;
+    performMove(btn.dataset.move);
   });
 
   function onSolved() {
